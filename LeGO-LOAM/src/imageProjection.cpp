@@ -242,12 +242,12 @@ public:
                 continue;
 
             range = sqrt(thisPoint.x * thisPoint.x + thisPoint.y * thisPoint.y + thisPoint.z * thisPoint.z);
-            if (range < sensorMinimumRange)
+            if (range < sensorMinimumRange)  // range: absolute radial distance
                 continue;
             
             rangeMat.at<float>(rowIdn, columnIdn) = range;
 
-            thisPoint.intensity = (float)rowIdn + (float)columnIdn / 10000.0;
+            thisPoint.intensity = (float)rowIdn + (float)columnIdn / 10000.0; // use float to store index: row.column
 
             index = columnIdn  + rowIdn * Horizon_SCAN;
             fullCloud->points[index] = thisPoint;
@@ -320,7 +320,7 @@ public:
         // extract segmented cloud for lidar odometry
         for (size_t i = 0; i < N_SCAN; ++i) {
 
-            segMsg.startRingIndex[i] = sizeOfSegCloud-1 + 5;
+            segMsg.startRingIndex[i] = sizeOfSegCloud-1 + 5;  // why 5?
 
             for (size_t j = 0; j < Horizon_SCAN; ++j) {
                 if (labelMat.at<int>(i,j) > 0 || groundMat.at<int8_t>(i,j) == 1){

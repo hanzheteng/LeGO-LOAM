@@ -44,21 +44,21 @@
 
 #include <gtsam/nonlinear/ISAM2.h>
 
-using namespace gtsam;
+// using namespace gtsam;
 
 class mapOptimization{
 
 private:
 
-    NonlinearFactorGraph gtSAMgraph;
-    Values initialEstimate;
-    Values optimizedEstimate;
-    ISAM2 *isam;
-    Values isamCurrentEstimate;
+    gtsam::NonlinearFactorGraph gtSAMgraph;
+    gtsam::Values initialEstimate;
+    gtsam::Values optimizedEstimate;
+    gtsam::ISAM2 *isam;
+    gtsam::Values isamCurrentEstimate;
 
-    noiseModel::Diagonal::shared_ptr priorNoise;
-    noiseModel::Diagonal::shared_ptr odometryNoise;
-    noiseModel::Diagonal::shared_ptr constraintNoise;
+    gtsam::noiseModel::Diagonal::shared_ptr priorNoise;
+    gtsam::noiseModel::Diagonal::shared_ptr odometryNoise;
+    gtsam::noiseModel::Diagonal::shared_ptr constraintNoise;
 
     ros::NodeHandle nh;
 
@@ -81,19 +81,19 @@ private:
     tf::StampedTransform aftMappedTrans;
     tf::TransformBroadcaster tfBroadcaster;
 
-    vector<pcl::PointCloud<PointType>::Ptr> cornerCloudKeyFrames;
-    vector<pcl::PointCloud<PointType>::Ptr> surfCloudKeyFrames;
-    vector<pcl::PointCloud<PointType>::Ptr> outlierCloudKeyFrames;
+    std::vector<pcl::PointCloud<PointType>::Ptr> cornerCloudKeyFrames;
+    std::vector<pcl::PointCloud<PointType>::Ptr> surfCloudKeyFrames;
+    std::vector<pcl::PointCloud<PointType>::Ptr> outlierCloudKeyFrames;
 
-    deque<pcl::PointCloud<PointType>::Ptr> recentCornerCloudKeyFrames;
-    deque<pcl::PointCloud<PointType>::Ptr> recentSurfCloudKeyFrames;
-    deque<pcl::PointCloud<PointType>::Ptr> recentOutlierCloudKeyFrames;
+    std::deque<pcl::PointCloud<PointType>::Ptr> recentCornerCloudKeyFrames;
+    std::deque<pcl::PointCloud<PointType>::Ptr> recentSurfCloudKeyFrames;
+    std::deque<pcl::PointCloud<PointType>::Ptr> recentOutlierCloudKeyFrames;
     int latestFrameID;
 
-    vector<int> surroundingExistingKeyPosesID;
-    deque<pcl::PointCloud<PointType>::Ptr> surroundingCornerCloudKeyFrames;
-    deque<pcl::PointCloud<PointType>::Ptr> surroundingSurfCloudKeyFrames;
-    deque<pcl::PointCloud<PointType>::Ptr> surroundingOutlierCloudKeyFrames;
+    std::vector<int> surroundingExistingKeyPosesID;
+    std::deque<pcl::PointCloud<PointType>::Ptr> surroundingCornerCloudKeyFrames;
+    std::deque<pcl::PointCloud<PointType>::Ptr> surroundingSurfCloudKeyFrames;
+    std::deque<pcl::PointCloud<PointType>::Ptr> surroundingOutlierCloudKeyFrames;
     
     PointType previousRobotPosPoint;
     PointType currentRobotPosPoint;
@@ -226,10 +226,10 @@ public:
     mapOptimization():
         nh("~")
     {
-    	ISAM2Params parameters;
+    	gtsam::ISAM2Params parameters;
 		parameters.relinearizeThreshold = 0.01;
 		parameters.relinearizeSkip = 1;
-    	isam = new ISAM2(parameters);
+    	isam = new gtsam::ISAM2(parameters);
 
         pubKeyPoses = nh.advertise<sensor_msgs::PointCloud2>("/key_pose_origin", 2);
         pubLaserCloudSurround = nh.advertise<sensor_msgs::PointCloud2>("/laser_cloud_surround", 2);
@@ -346,8 +346,8 @@ public:
 
         gtsam::Vector Vector6(6);
         Vector6 << 1e-6, 1e-6, 1e-6, 1e-8, 1e-8, 1e-6;
-        priorNoise = noiseModel::Diagonal::Variances(Vector6);
-        odometryNoise = noiseModel::Diagonal::Variances(Vector6);
+        priorNoise = gtsam::noiseModel::Diagonal::Variances(Vector6);
+        odometryNoise = gtsam::noiseModel::Diagonal::Variances(Vector6);
 
         matA0 = cv::Mat (5, 3, CV_32F, cv::Scalar::all(0));
         matB0 = cv::Mat (5, 1, CV_32F, cv::Scalar::all(-1));
@@ -730,9 +730,9 @@ public:
         // save final point cloud
         pcl::io::savePCDFileASCII(fileDirectory+"finalCloud.pcd", *globalMapKeyFramesDS);
 
-        string cornerMapString = "/tmp/cornerMap.pcd";
-        string surfaceMapString = "/tmp/surfaceMap.pcd";
-        string trajectoryString = "/tmp/trajectory.pcd";
+        std::string cornerMapString = "/tmp/cornerMap.pcd";
+        std::string surfaceMapString = "/tmp/surfaceMap.pcd";
+        std::string trajectoryString = "/tmp/trajectory.pcd";
 
         pcl::PointCloud<PointType>::Ptr cornerMapCloud(new pcl::PointCloud<PointType>());
         pcl::PointCloud<PointType>::Ptr cornerMapCloudDS(new pcl::PointCloud<PointType>());
@@ -926,17 +926,17 @@ public:
         // transform from world origin to corrected pose
         Eigen::Affine3f tCorrect = correctionLidarFrame * tWrong; // pre-multiplying -> successive rotation about a fixed frame
         pcl::getTranslationAndEulerAngles (tCorrect, x, y, z, roll, pitch, yaw);
-        gtsam::Pose3 poseFrom = Pose3(Rot3::RzRyRx(roll, pitch, yaw), Point3(x, y, z));
+        gtsam::Pose3 poseFrom = gtsam::Pose3(gtsam::Rot3::RzRyRx(roll, pitch, yaw), gtsam::Point3(x, y, z));
         gtsam::Pose3 poseTo = pclPointTogtsamPose3(cloudKeyPoses6D->points[closestHistoryFrameID]);
         gtsam::Vector Vector6(6);
         float noiseScore = icp.getFitnessScore();
         Vector6 << noiseScore, noiseScore, noiseScore, noiseScore, noiseScore, noiseScore;
-        constraintNoise = noiseModel::Diagonal::Variances(Vector6);
+        constraintNoise = gtsam::noiseModel::Diagonal::Variances(Vector6);
         /* 
         	add constraints
         	*/
         std::lock_guard<std::mutex> lock(mtx);
-        gtSAMgraph.add(BetweenFactor<Pose3>(latestFrameIDLoopCloure, closestHistoryFrameID, poseFrom.between(poseTo), constraintNoise));
+        gtSAMgraph.add(gtsam::BetweenFactor<gtsam::Pose3>(latestFrameIDLoopCloure, closestHistoryFrameID, poseFrom.between(poseTo), constraintNoise));
         isam->update(gtSAMgraph);
         isam->update();
         gtSAMgraph.resize(0);
@@ -944,9 +944,9 @@ public:
         aLoopIsClosed = true;
     }
 
-    Pose3 pclPointTogtsamPose3(PointTypePose thisPoint){ // camera frame to lidar frame
-    	return Pose3(Rot3::RzRyRx(double(thisPoint.yaw), double(thisPoint.roll), double(thisPoint.pitch)),
-                           Point3(double(thisPoint.z),   double(thisPoint.x),    double(thisPoint.y)));
+    gtsam::Pose3 pclPointTogtsamPose3(PointTypePose thisPoint){ // camera frame to lidar frame
+    	return gtsam::Pose3(gtsam::Rot3::RzRyRx(double(thisPoint.yaw), double(thisPoint.roll), double(thisPoint.pitch)),
+                           gtsam::Point3(double(thisPoint.z),   double(thisPoint.x),    double(thisPoint.y)));
     }
 
     Eigen::Affine3f pclPointToAffine3fCameraToLidar(PointTypePose thisPoint){ // camera frame to lidar frame
@@ -1370,24 +1370,24 @@ public:
 
         previousRobotPosPoint = currentRobotPosPoint;
         /**
-         * update grsam graph
+         * update gtsam graph
          */
         if (cloudKeyPoses3D->points.empty()){
-            gtSAMgraph.add(PriorFactor<Pose3>(0, Pose3(Rot3::RzRyRx(transformTobeMapped[2], transformTobeMapped[0], transformTobeMapped[1]),
-                                                       		 Point3(transformTobeMapped[5], transformTobeMapped[3], transformTobeMapped[4])), priorNoise));
-            initialEstimate.insert(0, Pose3(Rot3::RzRyRx(transformTobeMapped[2], transformTobeMapped[0], transformTobeMapped[1]),
-                                                  Point3(transformTobeMapped[5], transformTobeMapped[3], transformTobeMapped[4])));
+            gtSAMgraph.add(gtsam::PriorFactor<gtsam::Pose3>(0, gtsam::Pose3(gtsam::Rot3::RzRyRx(transformTobeMapped[2], transformTobeMapped[0], transformTobeMapped[1]),
+                                                       		 gtsam::Point3(transformTobeMapped[5], transformTobeMapped[3], transformTobeMapped[4])), priorNoise));
+            initialEstimate.insert(0, gtsam::Pose3(gtsam::Rot3::RzRyRx(transformTobeMapped[2], transformTobeMapped[0], transformTobeMapped[1]),
+                                                  gtsam::Point3(transformTobeMapped[5], transformTobeMapped[3], transformTobeMapped[4])));
             for (int i = 0; i < 6; ++i)
             	transformLast[i] = transformTobeMapped[i];
         }
         else{
-            gtsam::Pose3 poseFrom = Pose3(Rot3::RzRyRx(transformLast[2], transformLast[0], transformLast[1]),
-                                                Point3(transformLast[5], transformLast[3], transformLast[4]));
-            gtsam::Pose3 poseTo   = Pose3(Rot3::RzRyRx(transformAftMapped[2], transformAftMapped[0], transformAftMapped[1]),
-                                                Point3(transformAftMapped[5], transformAftMapped[3], transformAftMapped[4]));
-            gtSAMgraph.add(BetweenFactor<Pose3>(cloudKeyPoses3D->points.size()-1, cloudKeyPoses3D->points.size(), poseFrom.between(poseTo), odometryNoise));
-            initialEstimate.insert(cloudKeyPoses3D->points.size(), Pose3(Rot3::RzRyRx(transformAftMapped[2], transformAftMapped[0], transformAftMapped[1]),
-                                                                     		   Point3(transformAftMapped[5], transformAftMapped[3], transformAftMapped[4])));
+            gtsam::Pose3 poseFrom = gtsam::Pose3(gtsam::Rot3::RzRyRx(transformLast[2], transformLast[0], transformLast[1]),
+                                                gtsam::Point3(transformLast[5], transformLast[3], transformLast[4]));
+            gtsam::Pose3 poseTo   = gtsam::Pose3(gtsam::Rot3::RzRyRx(transformAftMapped[2], transformAftMapped[0], transformAftMapped[1]),
+                                                gtsam::Point3(transformAftMapped[5], transformAftMapped[3], transformAftMapped[4]));
+            gtSAMgraph.add(gtsam::BetweenFactor<gtsam::Pose3>(cloudKeyPoses3D->points.size()-1, cloudKeyPoses3D->points.size(), poseFrom.between(poseTo), odometryNoise));
+            initialEstimate.insert(cloudKeyPoses3D->points.size(), gtsam::Pose3(gtsam::Rot3::RzRyRx(transformAftMapped[2], transformAftMapped[0], transformAftMapped[1]),
+                                                                     		   gtsam::Point3(transformAftMapped[5], transformAftMapped[3], transformAftMapped[4])));
         }
         /**
          * update iSAM
@@ -1403,10 +1403,10 @@ public:
          */
         PointType thisPose3D;
         PointTypePose thisPose6D;
-        Pose3 latestEstimate;
+        gtsam::Pose3 latestEstimate;
 
         isamCurrentEstimate = isam->calculateEstimate();
-        latestEstimate = isamCurrentEstimate.at<Pose3>(isamCurrentEstimate.size()-1);
+        latestEstimate = isamCurrentEstimate.at<gtsam::Pose3>(isamCurrentEstimate.size()-1);
 
         thisPose3D.x = latestEstimate.translation().y();
         thisPose3D.y = latestEstimate.translation().z();
@@ -1461,16 +1461,16 @@ public:
             // update key poses
                 int numPoses = isamCurrentEstimate.size();
             for (int i = 0; i < numPoses; ++i){
-            cloudKeyPoses3D->points[i].x = isamCurrentEstimate.at<Pose3>(i).translation().y();
-            cloudKeyPoses3D->points[i].y = isamCurrentEstimate.at<Pose3>(i).translation().z();
-            cloudKeyPoses3D->points[i].z = isamCurrentEstimate.at<Pose3>(i).translation().x();
+            cloudKeyPoses3D->points[i].x = isamCurrentEstimate.at<gtsam::Pose3>(i).translation().y();
+            cloudKeyPoses3D->points[i].y = isamCurrentEstimate.at<gtsam::Pose3>(i).translation().z();
+            cloudKeyPoses3D->points[i].z = isamCurrentEstimate.at<gtsam::Pose3>(i).translation().x();
 
             cloudKeyPoses6D->points[i].x = cloudKeyPoses3D->points[i].x;
             cloudKeyPoses6D->points[i].y = cloudKeyPoses3D->points[i].y;
             cloudKeyPoses6D->points[i].z = cloudKeyPoses3D->points[i].z;
-            cloudKeyPoses6D->points[i].roll  = isamCurrentEstimate.at<Pose3>(i).rotation().pitch();
-            cloudKeyPoses6D->points[i].pitch = isamCurrentEstimate.at<Pose3>(i).rotation().yaw();
-            cloudKeyPoses6D->points[i].yaw   = isamCurrentEstimate.at<Pose3>(i).rotation().roll();
+            cloudKeyPoses6D->points[i].roll  = isamCurrentEstimate.at<gtsam::Pose3>(i).rotation().pitch();
+            cloudKeyPoses6D->points[i].pitch = isamCurrentEstimate.at<gtsam::Pose3>(i).rotation().yaw();
+            cloudKeyPoses6D->points[i].yaw   = isamCurrentEstimate.at<gtsam::Pose3>(i).rotation().roll();
             }
 
             aLoopIsClosed = false;
