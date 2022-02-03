@@ -4,7 +4,7 @@
 
 #include <ros/ros.h>
 
-#include <sensor_msgs/Imu.h>
+// #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <nav_msgs/Odometry.h>
 
@@ -51,7 +51,7 @@ using namespace std;
 typedef pcl::PointXYZI  PointType;
 
 extern const string pointCloudTopic = "/velodyne_points";
-extern const string imuTopic = "/imu/data";
+// extern const string imuTopic = "/imu/data";
 
 // Save pcd
 extern const string fileDirectory = "/tmp/";
@@ -106,7 +106,7 @@ extern const double mappingProcessInterval = 0.3;
 
 extern const float scanPeriod = 0.1;
 extern const int systemDelay = 0;
-extern const int imuQueLength = 200;
+// extern const int imuQueLength = 200;
 
 extern const float sensorMinimumRange = 1.0;
 extern const float sensorMountAngle = 0.0;

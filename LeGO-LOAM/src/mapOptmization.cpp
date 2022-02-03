@@ -75,7 +75,7 @@ private:
     ros::Subscriber subLaserCloudSurfLast;
     ros::Subscriber subOutlierCloudLast;
     ros::Subscriber subLaserOdometry;
-    ros::Subscriber subImu;
+    // ros::Subscriber subImu;
 
     nav_msgs::Odometry odomAftMapped;
     tf::StampedTransform aftMappedTrans;
@@ -178,12 +178,12 @@ private:
     float transformAftMapped[6];
 
 
-    int imuPointerFront;
-    int imuPointerLast;
+    // int imuPointerFront;
+    // int imuPointerLast;
 
-    double imuTime[imuQueLength];
-    float imuRoll[imuQueLength];
-    float imuPitch[imuQueLength];
+    // double imuTime[imuQueLength];
+    // float imuRoll[imuQueLength];
+    // float imuPitch[imuQueLength];
 
     std::mutex mtx;
 
@@ -239,7 +239,7 @@ public:
         subLaserCloudSurfLast = nh.subscribe<sensor_msgs::PointCloud2>("/laser_cloud_surf_last", 2, &mapOptimization::laserCloudSurfLastHandler, this);
         subOutlierCloudLast = nh.subscribe<sensor_msgs::PointCloud2>("/outlier_cloud_last", 2, &mapOptimization::laserCloudOutlierLastHandler, this);
         subLaserOdometry = nh.subscribe<nav_msgs::Odometry>("/laser_odom_to_init", 5, &mapOptimization::laserOdometryHandler, this);
-        subImu = nh.subscribe<sensor_msgs::Imu> (imuTopic, 50, &mapOptimization::imuHandler, this);
+        // subImu = nh.subscribe<sensor_msgs::Imu> (imuTopic, 50, &mapOptimization::imuHandler, this);
 
         pubHistoryKeyFrames = nh.advertise<sensor_msgs::PointCloud2>("/history_cloud", 2);
         pubIcpKeyFrames = nh.advertise<sensor_msgs::PointCloud2>("/corrected_cloud", 2);
@@ -335,14 +335,14 @@ public:
             transformAftMapped[i] = 0;
         }
 
-        imuPointerFront = 0;
-        imuPointerLast = -1;
+        // imuPointerFront = 0;
+        // imuPointerLast = -1;
 
-        for (int i = 0; i < imuQueLength; ++i){
-            imuTime[i] = 0;
-            imuRoll[i] = 0;
-            imuPitch[i] = 0;
-        }
+        // for (int i = 0; i < imuQueLength; ++i){
+        //     imuTime[i] = 0;
+        //     imuRoll[i] = 0;
+        //     imuPitch[i] = 0;
+        // }
 
         gtsam::Vector Vector6(6);
         Vector6 << 1e-6, 1e-6, 1e-6, 1e-8, 1e-8, 1e-6;
@@ -462,32 +462,32 @@ public:
 
     void transformUpdate()
     {
-		if (imuPointerLast >= 0) {
-		    float imuRollLast = 0, imuPitchLast = 0;
-		    while (imuPointerFront != imuPointerLast) {
-		        if (timeLaserOdometry + scanPeriod < imuTime[imuPointerFront]) {
-		            break;
-		        }
-		        imuPointerFront = (imuPointerFront + 1) % imuQueLength;
-		    }
+		// if (imuPointerLast >= 0) {
+		//     float imuRollLast = 0, imuPitchLast = 0;
+		//     while (imuPointerFront != imuPointerLast) {
+		//         if (timeLaserOdometry + scanPeriod < imuTime[imuPointerFront]) {
+		//             break;
+		//         }
+		//         imuPointerFront = (imuPointerFront + 1) % imuQueLength;
+		//     }
 
-		    if (timeLaserOdometry + scanPeriod > imuTime[imuPointerFront]) {
-		        imuRollLast = imuRoll[imuPointerFront];
-		        imuPitchLast = imuPitch[imuPointerFront];
-		    } else {
-		        int imuPointerBack = (imuPointerFront + imuQueLength - 1) % imuQueLength;
-		        float ratioFront = (timeLaserOdometry + scanPeriod - imuTime[imuPointerBack]) 
-		                         / (imuTime[imuPointerFront] - imuTime[imuPointerBack]);
-		        float ratioBack = (imuTime[imuPointerFront] - timeLaserOdometry - scanPeriod) 
-		                        / (imuTime[imuPointerFront] - imuTime[imuPointerBack]);
+		//     if (timeLaserOdometry + scanPeriod > imuTime[imuPointerFront]) {
+		//         imuRollLast = imuRoll[imuPointerFront];
+		//         imuPitchLast = imuPitch[imuPointerFront];
+		//     } else {
+		//         int imuPointerBack = (imuPointerFront + imuQueLength - 1) % imuQueLength;
+		//         float ratioFront = (timeLaserOdometry + scanPeriod - imuTime[imuPointerBack]) 
+		//                          / (imuTime[imuPointerFront] - imuTime[imuPointerBack]);
+		//         float ratioBack = (imuTime[imuPointerFront] - timeLaserOdometry - scanPeriod) 
+		//                         / (imuTime[imuPointerFront] - imuTime[imuPointerBack]);
 
-		        imuRollLast = imuRoll[imuPointerFront] * ratioFront + imuRoll[imuPointerBack] * ratioBack;
-		        imuPitchLast = imuPitch[imuPointerFront] * ratioFront + imuPitch[imuPointerBack] * ratioBack;
-		    }
+		//         imuRollLast = imuRoll[imuPointerFront] * ratioFront + imuRoll[imuPointerBack] * ratioBack;
+		//         imuPitchLast = imuPitch[imuPointerFront] * ratioFront + imuPitch[imuPointerBack] * ratioBack;
+		//     }
 
-		    transformTobeMapped[0] = 0.998 * transformTobeMapped[0] + 0.002 * imuPitchLast;
-		    transformTobeMapped[2] = 0.998 * transformTobeMapped[2] + 0.002 * imuRollLast;
-		  }
+		//     transformTobeMapped[0] = 0.998 * transformTobeMapped[0] + 0.002 * imuPitchLast;
+		//     transformTobeMapped[2] = 0.998 * transformTobeMapped[2] + 0.002 * imuRollLast;
+		// }
 
 		for (int i = 0; i < 6; i++) {
 		    transformBefMapped[i] = transformSum[i];
@@ -640,16 +640,16 @@ public:
         newLaserOdometry = true;
     }
 
-    void imuHandler(const sensor_msgs::Imu::ConstPtr& imuIn){
-        double roll, pitch, yaw;
-        tf::Quaternion orientation;
-        tf::quaternionMsgToTF(imuIn->orientation, orientation);
-        tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
-        imuPointerLast = (imuPointerLast + 1) % imuQueLength;
-        imuTime[imuPointerLast] = imuIn->header.stamp.toSec();
-        imuRoll[imuPointerLast] = roll;
-        imuPitch[imuPointerLast] = pitch;
-    }
+    // void imuHandler(const sensor_msgs::Imu::ConstPtr& imuIn){
+    //     double roll, pitch, yaw;
+    //     tf::Quaternion orientation;
+    //     tf::quaternionMsgToTF(imuIn->orientation, orientation);
+    //     tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
+    //     imuPointerLast = (imuPointerLast + 1) % imuQueLength;
+    //     imuTime[imuPointerLast] = imuIn->header.stamp.toSec();
+    //     imuRoll[imuPointerLast] = roll;
+    //     imuPitch[imuPointerLast] = pitch;
+    // }
 
     void publishTF(){
 
